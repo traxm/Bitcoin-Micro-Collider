@@ -13,7 +13,7 @@ Step 0: **Install a Java runtime environment on your computer**.  If you don't a
 
 Step 1: **Download the Bitcoin Lotto executable JAR file [here](https://github.com/traxm/BitcoinLotto/releases)**.
 
-Step 2: **Create or download a list of bitcoin addresses to scan**.  The file needs to be in text format with each address on a separate line.  Example file [here](https://github.com/traxm/BitcoinLotto/tree/master/example%20address%20lists).
+Step 2: **Create or download a list of bitcoin addresses to scan**.  The file needs to be in text format with each address on a separate line.  Example file [here](https://github.com/traxm/BitcoinLotto/blob/master/example%20address%20lists/bitcoinAddresses.txt).
 
 Step 3: **Open the executable JAR file** called BitcoinLotto.jar
 

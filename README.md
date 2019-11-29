@@ -4,9 +4,7 @@ BitcoinLotto is a bitcoin address/key generator which compares randomly generate
 
 For example, if a user supplied a list of all bitcoin addresses containing bitcoin balances, the program would generate random address/key combinations until a match was found against an address containing a balance.  The program would alert the user and save the address/key combination to a text file for future use.  The user would have the option to utilize the private key to take control of the address and it's underlying holdings.
 
-![Screenshot 1](https://raw.githubusercontent.com/traxm/BitcoinLotto/master/images/btcLotto_2.jpg)
-
-![Screenshot 2](https://raw.githubusercontent.com/traxm/BitcoinLotto/master/images/btcLotto.jpg)
+![Screenshot 2](https://raw.githubusercontent.com/traxm/BitcoinLotto/master/images/ss_2.jpg)
 
 
 # How to use Bitcoin Lotto

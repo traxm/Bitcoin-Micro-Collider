@@ -1,19 +1,10 @@
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Timer;
 import java.util.prefs.Preferences;
 
 import org.bitcoinj.core.Address;
-import org.bitcoinj.params.MainNetParams;
+import org.bitcoinj.script.Script.ScriptType;
 
 public class BitcoinLotto {
 
@@ -23,8 +14,10 @@ public class BitcoinLotto {
 	}
 
 	private Status lottoStatus = Status.MAIN_MENU;
+	private FileStatus fileStatus = FileStatus.FILE_NOT_LOADED;
 	private Boolean isInitialized = false;
-	private Address[] addressArray;
+	private Address[][] p2pkh_address_array; // Array of address arrays
+	private int[][] indexArray; // Array of index values (to lookup address arrays based on prefix)
 	private SearchThread[] threadArray;
 	private Timer guiTimer;
 
@@ -39,67 +32,18 @@ public class BitcoinLotto {
 	private long pausedTimeTotal = 0;
 
 	private long pauseStartTime = 0;
-	private String prefsNode = "com/github/traxm/BitcoinLotto";
-	private String prefsFileString = "filePath";
+	public static String prefsNode = "com/github/traxm/BitcoinLotto";
+	public static String prefsFileString = "filePath";
+	public static String prefsThreadString = "threadCount";
 
-	private String prefsThreadString = "threadCount";
+	public Address[][] getAddressArray() {
 
-	public Address[] getAddressArray() {
-		return addressArray;
+		return this.p2pkh_address_array;
+
 	}
 
-	public void initializeLookupAddresses(File thisFile) {
-		/*
-		 * Read the address file and populate an array with the data
-		 */
-
-		String[] addressStringArray;
-		Address thisAddress = null;
-		ArrayList<Address> addressList = null;
-
-		addressStringArray = readLines(thisFile);
-		addressList = new ArrayList<Address>();
-
-		for (int i = 0; i < addressStringArray.length; i++) {
-			try {
-				thisAddress = Address.fromString(MainNetParams.get(), addressStringArray[i]);
-			} catch (org.bitcoinj.core.AddressFormatException ex) {
-				primaryWindow.showFileErrorMessage();
-				return;
-			}
-			addressList.add(thisAddress);
-		}
-
-		addressArray = new Address[addressList.size()];
-		addressArray = addressList.toArray(addressArray);
-
-		// Check to see if any addresses entries were read
-		if (addressArray == null || addressArray.length <= 0)
-			return;
-
-		// Update the UI with the number of addresses loaded
-		primaryWindow.setTotalAddressLabel(addressArray.length);
-
-		// Allow the user to start the lotto
-		primaryWindow.enableStartButton();
-
-		// Save the file path for future use
-		saveFilePath(thisFile);
-
-		// Write a small test file to confirm that any matched addresses can be saved
-		writeStarterFile();
-
-		isInitialized = true;
-	}
-
-	private Boolean isFileAvailable(String filePath) {
-		// Checks to see if a last address file is available to load
-
-		if (filePath == null)
-			return false;
-
-		File tempFile = new File(filePath);
-		return tempFile.exists();
+	public int[][] getIndexArray() {
+		return this.indexArray;
 	}
 
 	public Boolean isInitialized() {
@@ -131,39 +75,6 @@ public class BitcoinLotto {
 		primaryWindow.setThreadsActiveLabel(activeThreadCount);
 	}
 
-	private String[] readLines(File thisFile) {
-		/*
-		 * Read lines from a file
-		 */
-
-		BufferedReader bufferedReader;
-
-		FileInputStream thisStream;
-		List<String> lines = null;
-		try {
-			thisStream = new FileInputStream(thisFile);
-			bufferedReader = new BufferedReader(new InputStreamReader(thisStream));
-
-			lines = new ArrayList<String>();
-			String line = null;
-
-			while ((line = bufferedReader.readLine()) != null) {
-				lines.add(line);
-			}
-
-			bufferedReader.close();
-		} catch (FileNotFoundException e) {
-			primaryWindow.showFileErrorMessage();
-			e.printStackTrace();
-
-		} catch (IOException e) {
-			primaryWindow.showFileErrorMessage();
-			e.printStackTrace();
-		}
-
-		return lines.toArray(new String[lines.size()]);
-	}
-
 	public void resumeAllThreads() {
 		/*
 		 * Create and start new threads based on user input
@@ -175,14 +86,6 @@ public class BitcoinLotto {
 
 		// Update the paused time
 		this.pausedTimeTotal += (System.nanoTime() - this.pauseStartTime);
-	}
-
-	private void saveFilePath(File thisFile) {
-		// Saves the file path for future use
-		String filePathString = thisFile.getAbsolutePath();
-
-		Preferences prefs = Preferences.userRoot().node(prefsNode);
-		prefs.put(prefsFileString, filePathString);
 	}
 
 	private void saveThreadCount(int threadCount) {
@@ -197,21 +100,19 @@ public class BitcoinLotto {
 		 */
 		primaryWindow = new PrimaryWindow(this);
 
+		primaryWindow.setWindowEnabled(true);
+
 		// Check to see if an existing address file is available
 		Preferences prefs = Preferences.userRoot().node(prefsNode);
 		// Does the preference entry exist
 		// Is the file available
-		if (isFileAvailable(prefs.get(prefsFileString, null))) {
+		if (LoadAddresses.isFileAvailable(prefs.get(prefsFileString, null))) {
 			// Load the existing file
-			System.out.println(isFileAvailable(prefs.get(prefsFileString, null)));
 			primaryWindow.setAddressFile(new File(prefs.get(prefsFileString, null)));
 
 			// Set the thread count
-			primaryWindow.setThreadCount(prefs.getInt(this.prefsThreadString, 4));
+			primaryWindow.setThreadCount(prefs.getInt(BitcoinLotto.prefsThreadString, 4));
 		}
-
-		primaryWindow.setWindowEnabled(true);
-
 	}
 
 	public void startLotto(int threadCount) throws URISyntaxException {
@@ -251,9 +152,9 @@ public class BitcoinLotto {
 
 		// Create specified threads
 		for (int i = 0; i < threadCount; i++) {
-			SearchThread thisThread = new SearchThread(); // Create a Search Thread instance
+			SearchThread thisThread = new SearchThread(this, ScriptType.P2SH, (i + 1) * 1000); // Create a Search Thread
+																								// instance
 			threadArray[i] = thisThread; // Add the instance to the thread array
-			thisThread.initialize(this, (i + 1) * 1000); // Initialize the thread and pass startup delay/sleep duration
 		}
 
 		// Start each of the threads
@@ -287,21 +188,17 @@ public class BitcoinLotto {
 		primaryWindow.setThreadsActiveLabel(activeThreadCount);
 	}
 
-	private void writeStarterFile() {
-		// Writes a blank file to confirm write process functions as intended
-		String thisString = "Ignore this file";
-		FileWriter thisFile;
-		try {
-			thisFile = new FileWriter("testFilePleaseIgnore.txt");
-			BufferedWriter writer = new BufferedWriter(thisFile);
-			writer.write(thisString);
-			writer.close();
-		} catch (IOException e) {
-			// Exit
-			primaryWindow.showFileErrorMessage();
-		}
+	public void setAddressArray(Address[][] thisAddressArray, int[][] thisIntArray) {
+		this.p2pkh_address_array = thisAddressArray;
+		this.indexArray = thisIntArray;
+
+		this.fileStatus = FileStatus.FILE_LOADED;
 	}
 
+}
+
+enum FileStatus {
+	FILE_LOADED, FILE_LOADING, FILE_NOT_LOADED;
 }
 
 enum Status {

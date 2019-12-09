@@ -7,6 +7,7 @@ import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.IOException;
 import java.net.URISyntaxException;
 
 import javax.swing.SwingConstants;
@@ -14,6 +15,11 @@ import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultEditorKit;
+import javax.swing.text.Document;
+import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.JButton;
 import javax.swing.JTextField;
 import javax.swing.SpinnerModel;
@@ -23,9 +29,12 @@ import javax.swing.JTextArea;
 import javax.swing.JSeparator;
 import javax.swing.JSpinner;
 import javax.swing.JProgressBar;
+import javax.swing.JScrollPane;
+
 import java.awt.Color;
 import javax.swing.JFileChooser;
 import java.awt.SystemColor;
+import javax.swing.JTextPane;
 
 public class PrimaryWindow {
 
@@ -39,7 +48,8 @@ public class PrimaryWindow {
 	private JProgressBar progressBar;
 	private JSpinner threadSpinner;
 	private JButton loadFileButton;
-
+	private JTextPane statusTextPane;
+	
 	private JLabel totalAttemptsLabel;
 	private JLabel attemptsPerSecondLabel;
 	private JLabel totalAddressLabel;
@@ -48,6 +58,7 @@ public class PrimaryWindow {
 	private JLabel threadCountLabel;
 	private JLabel matchedKeyLabel;
 	private JLabel matchedAddressLabel;
+	private JScrollPane scrollPane;
 
 	/*
 	 * Create the application.
@@ -105,31 +116,31 @@ public class PrimaryWindow {
 		lblBitcoinLotto.setHorizontalAlignment(SwingConstants.CENTER);
 		lblBitcoinLotto.setFont(new Font("Tahoma", Font.PLAIN, 62));
 
-		loadFileButton = new JButton("Load Address File");
-		loadFileButton.setBounds(10, 513, 300, 54);
+		loadFileButton = new JButton("Choose Address File");
+		loadFileButton.setBounds(19, 455, 211, 33);
 		loadFileButton.addActionListener(new FileBrowserListener());
 		mainPanel.add(loadFileButton);
-		loadFileButton.setFont(new Font("Tahoma", Font.PLAIN, 24));
+		loadFileButton.setFont(new Font("Tahoma", Font.PLAIN, 18));
 
 		fileAddressField = new JTextField();
-		fileAddressField.setBounds(10, 472, 396, 25);
+		fileAddressField.setBounds(19, 419, 396, 25);
 		mainPanel.add(fileAddressField);
 		fileAddressField.setColumns(10);
 
 		JLabel lblLottoThreads = new JLabel("Lotto Threads");
-		lblLottoThreads.setBounds(10, 364, 414, 33);
+		lblLottoThreads.setBounds(10, 331, 414, 33);
 		mainPanel.add(lblLottoThreads);
 		lblLottoThreads.setHorizontalAlignment(SwingConstants.CENTER);
 		lblLottoThreads.setFont(new Font("Tahoma", Font.PLAIN, 24));
 
 		startButton = new JButton("Start Lotto!");
-		startButton.setBounds(10, 585, 300, 65);
+		startButton.setBounds(10, 499, 300, 65);
 		mainPanel.add(startButton);
 		startButton.setFont(new Font("Tahoma", Font.PLAIN, 24));
 		startButton.setEnabled(false);
 
 		JButton btnExit = new JButton("Exit");
-		btnExit.setBounds(320, 585, 104, 65);
+		btnExit.setBounds(320, 499, 104, 65);
 		btnExit.setBackground(Color.red);
 		mainPanel.add(btnExit);
 		btnExit.setFont(new Font("Tahoma", Font.PLAIN, 24));
@@ -147,12 +158,12 @@ public class PrimaryWindow {
 		mainPanel.add(txtrTheBitcoinLotto);
 
 		JSeparator separator = new JSeparator();
-		separator.setBounds(22, 351, 390, 2);
+		separator.setBounds(22, 321, 390, 2);
 		mainPanel.add(separator);
 
 		threadSpinner = new JSpinner();
 		threadSpinner.setFont(new Font("Tahoma", Font.PLAIN, 22));
-		threadSpinner.setBounds(165, 406, 104, 35);
+		threadSpinner.setBounds(165, 373, 104, 35);
 		mainPanel.add(threadSpinner);
 		SpinnerModel spinnerModel = new SpinnerNumberModel(4, 1, 64, 1);
 		threadSpinner.setModel(spinnerModel);
@@ -162,6 +173,21 @@ public class PrimaryWindow {
 		btnExit.addActionListener(new ExitListener());
 		startButton.addActionListener(new StartListener());
 		startButton.setBackground(Color.green);
+		
+		statusTextPane = new JTextPane();
+		statusTextPane.setForeground(Color.BLUE);
+		statusTextPane.setBackground(Color.WHITE);
+		statusTextPane.setContentType("text/html");
+		statusTextPane.setEditable(false);
+		//statusTextPane.setBounds(10, 585, 151, 65);
+		statusTextPane.setAutoscrolls(true);
+		mainPanel.add(statusTextPane);
+		
+		scrollPane = new JScrollPane(statusTextPane);
+		scrollPane.setBounds(10, 570, 414, 80);
+		scrollPane.setAutoscrolls(true);
+		mainPanel.add(scrollPane);
+		
 
 		workingPanel = new JPanel();
 		panel.add(workingPanel, "name_432575102303500");
@@ -248,30 +274,30 @@ public class PrimaryWindow {
 		totalAddressLabel = new JLabel("0");
 		totalAddressLabel.setHorizontalAlignment(SwingConstants.LEFT);
 		totalAddressLabel.setFont(new Font("Tahoma", Font.PLAIN, 12));
-		totalAddressLabel.setBounds(137, 212, 122, 15);
+		totalAddressLabel.setBounds(138, 198, 122, 15);
 		workingPanel.add(totalAddressLabel);
 
 		JLabel addressTotal = new JLabel("Target Addresses:");
 		addressTotal.setHorizontalAlignment(SwingConstants.RIGHT);
 		addressTotal.setFont(new Font("Tahoma", Font.PLAIN, 12));
-		addressTotal.setBounds(5, 212, 122, 15);
+		addressTotal.setBounds(6, 198, 122, 15);
 		workingPanel.add(addressTotal);
 
 		threadCountLabel = new JLabel("0");
 		threadCountLabel.setHorizontalAlignment(SwingConstants.LEFT);
 		threadCountLabel.setFont(new Font("Tahoma", Font.PLAIN, 12));
-		threadCountLabel.setBounds(359, 212, 57, 15);
+		threadCountLabel.setBounds(360, 198, 57, 15);
 		workingPanel.add(threadCountLabel);
 
 		JLabel lblThreadsActive = new JLabel("Threads Active:");
 		lblThreadsActive.setHorizontalAlignment(SwingConstants.RIGHT);
 		lblThreadsActive.setFont(new Font("Tahoma", Font.PLAIN, 12));
-		lblThreadsActive.setBounds(258, 212, 95, 15);
+		lblThreadsActive.setBounds(259, 198, 95, 15);
 		workingPanel.add(lblThreadsActive);
 
-		JLabel matchedAddress = new JLabel("Matched Address:");
+		JLabel matchedAddress = new JLabel("Matched Public Address:");
 		matchedAddress.setHorizontalAlignment(SwingConstants.LEFT);
-		matchedAddress.setBounds(10, 441, 106, 15);
+		matchedAddress.setBounds(10, 441, 137, 15);
 		workingPanel.add(matchedAddress);
 
 		JLabel matchedKey = new JLabel("Matched Private Key:");
@@ -319,7 +345,7 @@ public class PrimaryWindow {
 
 	public void setSuccessLabel(Boolean thisBool, String matchedAddress, String matchedPrivateKey) {
 		if (thisBool) {
-			this.successLabel.setText("YES!!!1!");
+			this.successLabel.setText("YES!!");
 			this.successLabel.setForeground(Color.GREEN);
 
 			this.matchedAddressLabel.setText(matchedAddress);
@@ -331,13 +357,19 @@ public class PrimaryWindow {
 		this.threadCountLabel.setText(String.format("%,d", thisThreadCount));
 	}
 
-	public void enableStartButton() {
-		startButton.setEnabled(true);
+	public void setStartButtonEnabled(Boolean thisBool) {
+		startButton.setEnabled(thisBool);
 	}
 	
 	public void setAddressFile(File thisFile) {
+		
+		this.setStartButtonEnabled(false);
+
 		fileAddressField.setText(thisFile.getPath());
-		bitcoinLotto.initializeLookupAddresses(thisFile);
+		
+		//Set the new address file
+		LoadAddresses loader = new LoadAddresses(this.bitcoinLotto, this, thisFile);
+		loader.run();
 	}
 	
 	public void setThreadCount(int thisInt) {
@@ -350,7 +382,7 @@ public class PrimaryWindow {
 		long minute = (duration / (1000 * 60)) % 60;
 		long hour = (duration / (1000 * 60 * 60)) % 24;
 
-		String time = String.format("%02d:%02d:%02d", hour, minute, second);
+		String time = String.format("%04d:%02d:%02d", hour, minute, second);
 		this.timeLabel.setText(String.format(time));
 
 		// Set attempts per second
@@ -366,6 +398,19 @@ public class PrimaryWindow {
 	
 	public void showAddressFormatMessage() {
 		JOptionPane.showMessageDialog(frmBitcoinLotto, "One or more addresses are have incorrect formats");
+	}
+	
+	public void setStatusTextPane(String thisString) {
+		
+		HTMLDocument doc = (HTMLDocument) statusTextPane.getDocument();
+		HTMLEditorKit editorKit = (HTMLEditorKit)statusTextPane.getEditorKit();
+		try {
+			editorKit.insertHTML(doc, doc.getLength(), thisString, 0, 0, null);
+			statusTextPane.setCaretPosition(doc.getLength());
+		} catch (BadLocationException | IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	public class PauseListener implements ActionListener {
@@ -416,7 +461,7 @@ public class PrimaryWindow {
 			if (returnVal == JFileChooser.APPROVE_OPTION) {
 				File thisFile = fileChooser.getSelectedFile();
 				setAddressFile(thisFile);
-			}
+			}		
 		}
 	}
 
@@ -426,6 +471,5 @@ public class PrimaryWindow {
 			System.exit(0);
 		}
 	}
-	
-	
+		
 }

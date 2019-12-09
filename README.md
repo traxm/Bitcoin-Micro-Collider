@@ -19,4 +19,6 @@ Step 3: **Open the executable JAR file** called BitcoinLotto.jar
 
 Step 4: **Click "Load Address File"** and browse to the bitcoin address text file
 
-Step 5: After the text file has been loaded, the **"Start Lotto"** button will turn green.  Click this button
+Step 5: Wait while the file is loaded (this can take some time for large files)
+
+Step 6: After the text file has been loaded, the **"Start Lotto"** button will turn green.  Click this button to begin the lotto process.

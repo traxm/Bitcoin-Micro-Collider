@@ -11,7 +11,7 @@ import org.bitcoinj.script.Script.ScriptType;
 
 public class SearchThread extends Thread {
 
-	private BitcoinLotto bitcoinLotto;
+	private MicroBitcoinCollider bitcoinCollider;
 	private Address[][] addressArray;
 	private int[][] indexArray;
 	private char[] charArray;
@@ -35,7 +35,7 @@ public class SearchThread extends Thread {
 				// Create the character array to speed searches
 				this.charArray = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".toCharArray();
 				// Update the active thread count
-				bitcoinLotto.updateThreadCount();
+				bitcoinCollider.updateThreadCount();
 				// Start checking addresses
 				checkAddresses();
 			}
@@ -45,10 +45,10 @@ public class SearchThread extends Thread {
 		}
 	}
 
-	public SearchThread(BitcoinLotto thisLotto, ScriptType thisType, int thisStartDelay) {
-		bitcoinLotto = thisLotto;
-		addressArray = thisLotto.getAddressArray();
-		this.indexArray = thisLotto.getIndexArray();
+	public SearchThread(MicroBitcoinCollider thisCollider, ScriptType thisType, int thisStartDelay) {
+		bitcoinCollider = thisCollider;
+		addressArray = thisCollider.getAddressArray();
+		this.indexArray = thisCollider.getIndexArray();
 		startDelay = thisStartDelay;
 	}
 
@@ -73,7 +73,7 @@ public class SearchThread extends Thread {
 
 	private Boolean evaluateAddress(Address thisAddress, Address[] thisArray) {
 
-		bitcoinLotto.logAddressCheck();
+		bitcoinCollider.logAddressCheck();
 
 		if (thisArray.length <= 0)
 			return false;
@@ -136,13 +136,13 @@ public class SearchThread extends Thread {
 
 		int randomInt = new Random().nextInt(9999999);
 
-		FileWriter thisFile = new FileWriter("bitcoinLottoWinner" + randomInt + ".txt");
+		FileWriter thisFile = new FileWriter("bitcoin_Collider_Match_" + randomInt + ".txt");
 		BufferedWriter writer = new BufferedWriter(thisFile);
 		writer.write(thisString);
 		writer.close();
 
 		// Notifies the primary class so UI elements can be updated
-		bitcoinLotto.notifySuccess(Address.fromKey(MainNetParams.get(), thisKey, ScriptType.P2PKH).toString(),
+		bitcoinCollider.notifySuccess(Address.fromKey(MainNetParams.get(), thisKey, ScriptType.P2PKH).toString(),
 				thisKey.getPrivateKeyAsWiF(MainNetParams.get()));
 	}
 

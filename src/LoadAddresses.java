@@ -14,7 +14,7 @@ import org.bitcoinj.params.MainNetParams;
 
 public class LoadAddresses extends Thread {
 
-	private BitcoinLotto bitcoinLotto;
+	private MicroBitcoinCollider bitcoinCollider;
 	private PrimaryWindow primaryWindow;
 
 	private File tempFile;
@@ -32,8 +32,8 @@ public class LoadAddresses extends Thread {
 		initializeLookupAddresses();
 	}
 
-	public LoadAddresses(BitcoinLotto thisLotto, PrimaryWindow thisWindow, File thisFile) {
-		this.bitcoinLotto = thisLotto;
+	public LoadAddresses(MicroBitcoinCollider thisCollider, PrimaryWindow thisWindow, File thisFile) {
+		this.bitcoinCollider = thisCollider;
 		this.tempFile = thisFile;
 		this.primaryWindow = thisWindow;
 		thisProcessStatus = ProcessStatus.INITIALIZED;
@@ -75,16 +75,16 @@ public class LoadAddresses extends Thread {
 		}
 
 		// Get address arrays for the three address types
-		bitcoinLotto.setAddressArray(getAddressesFromArray(addressStringArray), this.addressIndex);
+		bitcoinCollider.setAddressArray(getAddressesFromArray(addressStringArray), this.addressIndex);
 
 		primaryWindow.setStatusTextPane("--------------------<br>");
 		primaryWindow.setStatusTextPane("<b>FINISHED LOADING " + String.format("%,d", addressCount) + " ADDRESSES</b>" + "<br>");
-		
+	
 		
 		// Update the UI with the number of addresses loaded
 		primaryWindow.setTotalAddressLabel(this.getTotalAddressCount());
 
-		// Allow the user to start the lotto
+		// Allow the user to start the collider
 		primaryWindow.setStartButtonEnabled(true);
 
 		// Save the file path for future use
@@ -210,6 +210,7 @@ public class LoadAddresses extends Thread {
 		long endTime = System.nanoTime();
 
 		primaryWindow.setStatusTextPane("File text read time " + ((endTime - startTime)/10000000) + "ms");
+		primaryWindow.setStatusTextPane("Loading addresses into memory... <br>");
 
 		return lines.toArray(new String[lines.size()]);
 	}
@@ -217,7 +218,7 @@ public class LoadAddresses extends Thread {
 	private long getTotalAddressCount() {
 		// Counts the number of addresses across all arrays
 
-		Address[][] thisArray = this.bitcoinLotto.getAddressArray();
+		Address[][] thisArray = this.bitcoinCollider.getAddressArray();
 
 		long totalCount = 0;
 
@@ -231,8 +232,8 @@ public class LoadAddresses extends Thread {
 		// Saves the file path for future use
 		String filePathString = thisFile.getAbsolutePath();
 
-		Preferences prefs = Preferences.userRoot().node(BitcoinLotto.prefsNode);
-		prefs.put(BitcoinLotto.prefsFileString, filePathString);
+		Preferences prefs = Preferences.userRoot().node(MicroBitcoinCollider.prefsNode);
+		prefs.put(MicroBitcoinCollider.prefsFileString, filePathString);
 	}
 
 	public static Boolean isFileAvailable(String filePath) {

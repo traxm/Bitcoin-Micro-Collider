@@ -38,10 +38,10 @@ import javax.swing.JTextPane;
 
 public class PrimaryWindow {
 
-	private JFrame frmBitcoinLotto;
+	private JFrame mbcFrame;
 	private JTextField fileAddressField;
 	private JButton startButton;
-	private BitcoinLotto bitcoinLotto;
+	private MicroBitcoinCollider microCollider;
 	private JPanel mainPanel;
 	private JPanel workingPanel;
 	private JButton pauseButton;
@@ -63,13 +63,13 @@ public class PrimaryWindow {
 	/*
 	 * Create the application.
 	 */
-	public PrimaryWindow(BitcoinLotto thisLotto) {
-		bitcoinLotto = thisLotto;
+	public PrimaryWindow(MicroBitcoinCollider thisCollider) {
+		microCollider = thisCollider;
 		initialize();
 	}
 
 	public void setWindowEnabled(Boolean thisBool) {
-		this.frmBitcoinLotto.setVisible(thisBool);
+		this.mbcFrame.setVisible(thisBool);
 	}
 
 	/**
@@ -95,26 +95,26 @@ public class PrimaryWindow {
 			}
 		}
 
-		frmBitcoinLotto = new JFrame();
-		frmBitcoinLotto.setTitle("Bitcoin Lotto");
-		frmBitcoinLotto.setBounds(100, 100, 450, 700);
-		frmBitcoinLotto.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frmBitcoinLotto.getContentPane().setLayout(null);
+		mbcFrame = new JFrame();
+		mbcFrame.setTitle("Micro Bitcoin Collider");
+		mbcFrame.setBounds(100, 100, 450, 700);
+		mbcFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		mbcFrame.getContentPane().setLayout(null);
 
 		JPanel panel = new JPanel();
 		panel.setBounds(0, 0, 434, 661);
-		frmBitcoinLotto.getContentPane().add(panel);
+		mbcFrame.getContentPane().add(panel);
 		panel.setLayout(new CardLayout(0, 0));
 
 		mainPanel = new JPanel();
 		panel.add(mainPanel, "name_432466542248400");
 		mainPanel.setLayout(null);
 
-		JLabel lblBitcoinLotto = new JLabel("Bitcoin Lotto!");
-		lblBitcoinLotto.setBounds(34, 11, 365, 75);
-		mainPanel.add(lblBitcoinLotto);
-		lblBitcoinLotto.setHorizontalAlignment(SwingConstants.CENTER);
-		lblBitcoinLotto.setFont(new Font("Tahoma", Font.PLAIN, 62));
+		JLabel mcLabel = new JLabel("Micro Bitcoin Collider!");
+		mcLabel.setBounds(34, 11, 365, 75);
+		mainPanel.add(mcLabel);
+		mcLabel.setHorizontalAlignment(SwingConstants.CENTER);
+		mcLabel.setFont(new Font("Tahoma", Font.PLAIN, 36));
 
 		loadFileButton = new JButton("Choose Address File");
 		loadFileButton.setBounds(19, 455, 211, 33);
@@ -127,13 +127,13 @@ public class PrimaryWindow {
 		mainPanel.add(fileAddressField);
 		fileAddressField.setColumns(10);
 
-		JLabel lblLottoThreads = new JLabel("Lotto Threads");
-		lblLottoThreads.setBounds(10, 331, 414, 33);
-		mainPanel.add(lblLottoThreads);
-		lblLottoThreads.setHorizontalAlignment(SwingConstants.CENTER);
-		lblLottoThreads.setFont(new Font("Tahoma", Font.PLAIN, 24));
+		JLabel threadsLabel = new JLabel("Collider Threads");
+		threadsLabel.setBounds(10, 331, 414, 33);
+		mainPanel.add(threadsLabel);
+		threadsLabel.setHorizontalAlignment(SwingConstants.CENTER);
+		threadsLabel.setFont(new Font("Tahoma", Font.PLAIN, 24));
 
-		startButton = new JButton("Start Lotto!");
+		startButton = new JButton("Start Collider!");
 		startButton.setBounds(10, 499, 300, 65);
 		mainPanel.add(startButton);
 		startButton.setFont(new Font("Tahoma", Font.PLAIN, 24));
@@ -145,17 +145,17 @@ public class PrimaryWindow {
 		mainPanel.add(btnExit);
 		btnExit.setFont(new Font("Tahoma", Font.PLAIN, 24));
 
-		JTextArea txtrTheBitcoinLotto = new JTextArea();
-		txtrTheBitcoinLotto.setFont(new Font("Monospaced", Font.PLAIN, 12));
-		txtrTheBitcoinLotto.setForeground(Color.BLACK);
-		txtrTheBitcoinLotto.setBackground(SystemColor.controlHighlight);
-		txtrTheBitcoinLotto.setEditable(false);
-		txtrTheBitcoinLotto.setWrapStyleWord(true);
-		txtrTheBitcoinLotto.setLineWrap(true);
-		txtrTheBitcoinLotto.setText(
-				"The Bitcoin Lotto creates random bitcoin private/public key pairs and compares the addresses to a list of existing addresses.  In the event that an address is matched, the public/private keys are saved to a text file in the program directory.\r\n\r\n- Step 1: Load a text file of bitcoin addresses which you would like to check for matches (one address per line)\r\n- Step 2: Start the lotto");
-		txtrTheBitcoinLotto.setBounds(10, 97, 414, 213);
-		mainPanel.add(txtrTheBitcoinLotto);
+		JTextArea mcTextArea = new JTextArea();
+		mcTextArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
+		mcTextArea.setForeground(Color.BLACK);
+		mcTextArea.setBackground(SystemColor.controlHighlight);
+		mcTextArea.setEditable(false);
+		mcTextArea.setWrapStyleWord(true);
+		mcTextArea.setLineWrap(true);
+		mcTextArea.setText(
+				"The Micro Bitcoin Collider creates random bitcoin private/public key pairs and compares the addresses to a list of existing addresses.  In the event that an address is matched, the public/private keys are saved to a text file in the program directory.\r\n\r\n- Step 1: Load a text file of bitcoin addresses which you would like to check for matches (one address per line)\r\n- Step 2: Start the collider");
+		mcTextArea.setBounds(10, 97, 414, 213);
+		mainPanel.add(mcTextArea);
 
 		JSeparator separator = new JSeparator();
 		separator.setBounds(22, 321, 390, 2);
@@ -193,13 +193,13 @@ public class PrimaryWindow {
 		panel.add(workingPanel, "name_432575102303500");
 		workingPanel.setLayout(null);
 
-		JLabel lblBitcoinLotto_1 = new JLabel("Bitcoin Lotto!");
-		lblBitcoinLotto_1.setBounds(76, 5, 281, 51);
-		lblBitcoinLotto_1.setHorizontalAlignment(SwingConstants.CENTER);
-		lblBitcoinLotto_1.setFont(new Font("Tahoma", Font.PLAIN, 42));
-		workingPanel.add(lblBitcoinLotto_1);
+		JLabel mcLabel_1 = new JLabel("Bitcoin Collider!");
+		mcLabel_1.setBounds(76, 5, 281, 51);
+		mcLabel_1.setHorizontalAlignment(SwingConstants.CENTER);
+		mcLabel_1.setFont(new Font("Tahoma", Font.PLAIN, 42));
+		workingPanel.add(mcLabel_1);
 
-		JLabel label_1 = new JLabel("Lottery Attempts");
+		JLabel label_1 = new JLabel("Collider Attempts");
 		label_1.setBounds(10, 65, 414, 51);
 		label_1.setHorizontalAlignment(SwingConstants.CENTER);
 		label_1.setFont(new Font("Tahoma", Font.PLAIN, 32));
@@ -223,7 +223,7 @@ public class PrimaryWindow {
 		timeLabel.setFont(new Font("Tahoma", Font.PLAIN, 24));
 		workingPanel.add(timeLabel);
 
-		pauseButton = new JButton("Pause Lotto");
+		pauseButton = new JButton("Pause Collider");
 		pauseButton.setBounds(10, 541, 414, 51);
 		pauseButton.setFont(new Font("Tahoma", Font.PLAIN, 32));
 		pauseButton.addActionListener(new PauseListener());
@@ -368,8 +368,9 @@ public class PrimaryWindow {
 		fileAddressField.setText(thisFile.getPath());
 		
 		//Set the new address file
-		LoadAddresses loader = new LoadAddresses(this.bitcoinLotto, this, thisFile);
-		loader.run();
+		LoadAddresses loader = new LoadAddresses(this.microCollider, this, thisFile);
+		loader.start();
+		//loader.run();
 	}
 	
 	public void setThreadCount(int thisInt) {
@@ -393,11 +394,11 @@ public class PrimaryWindow {
 	}
 	
 	public void showFileErrorMessage() {
-		JOptionPane.showMessageDialog(frmBitcoinLotto, "File read/write failed.");
+		JOptionPane.showMessageDialog(mbcFrame, "File read/write failed.");
 	}
 	
 	public void showAddressFormatMessage() {
-		JOptionPane.showMessageDialog(frmBitcoinLotto, "One or more addresses are have incorrect formats");
+		JOptionPane.showMessageDialog(mbcFrame, "One or more addresses are have incorrect formats");
 	}
 	
 	public void setStatusTextPane(String thisString) {
@@ -423,15 +424,15 @@ public class PrimaryWindow {
 			if (isPaused) {
 				isPaused = false;
 				pauseButton.setBackground(Color.yellow);
-				pauseButton.setText("Pause Lotto");
+				pauseButton.setText("Pause Collider");
 				progressBar.setVisible(true);
-				bitcoinLotto.resumeAllThreads();
+				microCollider.resumeAllThreads();
 			} else {
 				isPaused = true;
 				pauseButton.setBackground(Color.green);
-				pauseButton.setText("Resume Lotto");
+				pauseButton.setText("Resume Collider");
 				progressBar.setVisible(false);
-				bitcoinLotto.pauseAllThreads();
+				microCollider.pauseAllThreads();
 			}
 		}
 	}
@@ -442,7 +443,7 @@ public class PrimaryWindow {
 			try {
 				int cpuThreads = (Integer) threadSpinner.getValue();
 				startButton.setText("Loading...");
-				bitcoinLotto.startLotto(cpuThreads);
+				microCollider.startCollider(cpuThreads);
 			} catch (URISyntaxException e) {
 				e.printStackTrace();
 			}
@@ -456,7 +457,7 @@ public class PrimaryWindow {
 			FileNameExtensionFilter filter = new FileNameExtensionFilter("TEXT FILES", "txt", "text");
 			fileChooser.setFileFilter(filter);
 			
-			int returnVal = fileChooser.showOpenDialog(frmBitcoinLotto);
+			int returnVal = fileChooser.showOpenDialog(mbcFrame);
 
 			if (returnVal == JFileChooser.APPROVE_OPTION) {
 				File thisFile = fileChooser.getSelectedFile();

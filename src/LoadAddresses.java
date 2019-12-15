@@ -14,7 +14,7 @@ import org.bitcoinj.params.MainNetParams;
 
 public class LoadAddresses extends Thread {
 
-	private MicroBitcoinCollider bitcoinCollider;
+	private BitcoinMicroCollider bitcoinCollider;
 	private PrimaryWindow primaryWindow;
 
 	private File tempFile;
@@ -32,7 +32,7 @@ public class LoadAddresses extends Thread {
 		initializeLookupAddresses();
 	}
 
-	public LoadAddresses(MicroBitcoinCollider thisCollider, PrimaryWindow thisWindow, File thisFile) {
+	public LoadAddresses(BitcoinMicroCollider thisCollider, PrimaryWindow thisWindow, File thisFile) {
 		this.bitcoinCollider = thisCollider;
 		this.tempFile = thisFile;
 		this.primaryWindow = thisWindow;
@@ -80,12 +80,14 @@ public class LoadAddresses extends Thread {
 		primaryWindow.setStatusTextPane("--------------------<br>");
 		primaryWindow.setStatusTextPane("<b>FINISHED LOADING " + String.format("%,d", addressCount) + " ADDRESSES</b>" + "<br>");
 	
+		bitcoinCollider.setFileStatus(FileStatus.FILE_LOADED);
 		
 		// Update the UI with the number of addresses loaded
 		primaryWindow.setTotalAddressLabel(this.getTotalAddressCount());
 
 		// Allow the user to start the collider
 		primaryWindow.setStartButtonEnabled(true);
+		primaryWindow.setLoadFileButtonEnabled(true);
 
 		// Save the file path for future use
 		saveFilePath(this.tempFile);
@@ -232,8 +234,8 @@ public class LoadAddresses extends Thread {
 		// Saves the file path for future use
 		String filePathString = thisFile.getAbsolutePath();
 
-		Preferences prefs = Preferences.userRoot().node(MicroBitcoinCollider.prefsNode);
-		prefs.put(MicroBitcoinCollider.prefsFileString, filePathString);
+		Preferences prefs = Preferences.userRoot().node(BitcoinMicroCollider.prefsNode);
+		prefs.put(BitcoinMicroCollider.prefsFileString, filePathString);
 	}
 
 	public static Boolean isFileAvailable(String filePath) {

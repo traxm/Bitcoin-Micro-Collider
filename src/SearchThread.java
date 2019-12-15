@@ -11,13 +11,17 @@ import org.bitcoinj.script.Script.ScriptType;
 
 public class SearchThread extends Thread {
 
-	private MicroBitcoinCollider bitcoinCollider;
+	private BitcoinMicroCollider bitcoinCollider;
 	private Address[][] addressArray;
 	private int[][] indexArray;
 	private char[] charArray;
-
+	private String[] labelArray; //For gui
+	private int thisThreadAddressCount = 0;
+	private int labelCounter = 0;
+	
 	private Boolean isInterrupted = false;
 	private int startDelay = 0;
+	private Boolean isStringLabelProvider = false; //Does this thread populate the gui labels
 
 	@Override
 	public void run() {
@@ -45,11 +49,16 @@ public class SearchThread extends Thread {
 		}
 	}
 
-	public SearchThread(MicroBitcoinCollider thisCollider, ScriptType thisType, int thisStartDelay) {
+	public SearchThread(BitcoinMicroCollider thisCollider, ScriptType thisType, int thisStartDelay, Boolean isGuiProvider) {
 		bitcoinCollider = thisCollider;
 		addressArray = thisCollider.getAddressArray();
 		this.indexArray = thisCollider.getIndexArray();
+		this.isStringLabelProvider = isGuiProvider;
 		startDelay = thisStartDelay;
+		
+		if (this.isStringLabelProvider)
+			labelArray = bitcoinCollider.getAddressLabelArray();
+		
 	}
 
 	private void checkAddresses() throws IOException, URISyntaxException {
@@ -74,7 +83,11 @@ public class SearchThread extends Thread {
 	private Boolean evaluateAddress(Address thisAddress, Address[] thisArray) {
 
 		bitcoinCollider.logAddressCheck();
-
+		thisThreadAddressCount++;
+		if (this.isStringLabelProvider)
+			this.updateGuiElements(thisAddress);
+		
+		
 		if (thisArray.length <= 0)
 			return false;
 
@@ -144,6 +157,16 @@ public class SearchThread extends Thread {
 		// Notifies the primary class so UI elements can be updated
 		bitcoinCollider.notifySuccess(Address.fromKey(MainNetParams.get(), thisKey, ScriptType.P2PKH).toString(),
 				thisKey.getPrivateKeyAsWiF(MainNetParams.get()));
+	}
+	
+	private void updateGuiElements(Address thisAddress) {
+		//Populate the label array with some addresses checked
+		if (thisThreadAddressCount % 25 == 0) {
+			labelArray[labelCounter] = thisAddress.toString();
+			
+			this.labelCounter++;
+			if (this.labelCounter >= 10) this.labelCounter = 0;
+		}
 	}
 
 	public void resumeThread() {

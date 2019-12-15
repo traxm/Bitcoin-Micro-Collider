@@ -6,10 +6,10 @@ import java.util.prefs.Preferences;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.script.Script.ScriptType;
 
-public class MicroBitcoinCollider {
+public class BitcoinMicroCollider {
 
 	public static void main(String[] args) {
-		MicroBitcoinCollider thisCollider = new MicroBitcoinCollider();
+		BitcoinMicroCollider thisCollider = new BitcoinMicroCollider();
 		thisCollider.startGui();
 	}
 
@@ -20,6 +20,7 @@ public class MicroBitcoinCollider {
 	private int[][] indexArray; // Array of index values (to lookup address arrays based on prefix)
 	private SearchThread[] threadArray;
 	private Timer guiTimer;
+	private String[] addressLabelArray = new String[10];
 
 	private GuiUpdateTimer guiUpdateTimer;
 
@@ -32,7 +33,7 @@ public class MicroBitcoinCollider {
 	private long pausedTimeTotal = 0;
 
 	private long pauseStartTime = 0;
-	public static String prefsNode = "com/github/traxm/Micro-Bitcoin-Collider";
+	public static String prefsNode = "com/github/traxm/Bitcoin-Micro-Collider";
 	public static String prefsFileString = "filePath";
 	public static String prefsThreadString = "threadCount";
 
@@ -111,8 +112,10 @@ public class MicroBitcoinCollider {
 			primaryWindow.setAddressFile(new File(prefs.get(prefsFileString, null)));
 
 			// Set the thread count
-			primaryWindow.setThreadCount(prefs.getInt(MicroBitcoinCollider.prefsThreadString, 4));
+			primaryWindow.setThreadCount(prefs.getInt(BitcoinMicroCollider.prefsThreadString, 4));
 		}
+		
+			
 	}
 
 	public void startCollider(int threadCount) throws URISyntaxException {
@@ -152,7 +155,7 @@ public class MicroBitcoinCollider {
 
 		// Create specified threads
 		for (int i = 0; i < threadCount; i++) {
-			SearchThread thisThread = new SearchThread(this, ScriptType.P2SH, (i + 1) * 1000); // Create a Search Thread
+			SearchThread thisThread = new SearchThread(this, ScriptType.P2SH, (i + 1) * 1000, i == 0); // Create a Search Thread
 																								// instance
 			threadArray[i] = thisThread; // Add the instance to the thread array
 		}
@@ -176,8 +179,14 @@ public class MicroBitcoinCollider {
 
 		long duration = System.nanoTime() - startTime - this.pausedTimeTotal;
 		this.primaryWindow.setTimeLabel(duration / 1000000, totalCheckCount);
+		
+		this.primaryWindow.setAddressLabels(this.addressLabelArray);
 	}
-
+	
+	public String[] getAddressLabelArray() { 
+		return this.addressLabelArray;
+	}
+	
 	public void updateThreadCount() {
 		// Called by threads at start - active threads communicated via UI
 
@@ -191,14 +200,16 @@ public class MicroBitcoinCollider {
 	public void setAddressArray(Address[][] thisAddressArray, int[][] thisIntArray) {
 		this.p2pkh_address_array = thisAddressArray;
 		this.indexArray = thisIntArray;
-
-		this.fileStatus = FileStatus.FILE_LOADED;
+	}
+	
+	public void setFileStatus(FileStatus thisStatus) {
+		this.fileStatus = thisStatus;
+	}
+	
+	public FileStatus getFileStatus() { 
+		return this.fileStatus; 
 	}
 
-}
-
-enum FileStatus {
-	FILE_LOADED, FILE_LOADING, FILE_NOT_LOADED;
 }
 
 enum Status {

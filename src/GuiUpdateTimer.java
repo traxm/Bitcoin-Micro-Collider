@@ -2,9 +2,9 @@ import java.util.TimerTask;
 
 public class GuiUpdateTimer extends TimerTask {
 
-	private MicroBitcoinCollider bitcoinCollider;
+	private BitcoinMicroCollider bitcoinCollider;
 	
-	public GuiUpdateTimer(MicroBitcoinCollider thisCollider) {
+	public GuiUpdateTimer(BitcoinMicroCollider thisCollider) {
 		bitcoinCollider = thisCollider;
 	}
 	
@@ -12,6 +12,7 @@ public class GuiUpdateTimer extends TimerTask {
 	@Override
 	public void run() {
 		bitcoinCollider.updateGuiElements();
+		
 	}
 	
 

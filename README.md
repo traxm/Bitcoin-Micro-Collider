@@ -11,7 +11,7 @@ For example, if a user supplied a list of all bitcoin addresses containing bitco
 
 Step 0: **Install a Java runtime environment on your computer**.  If you don't already have this installed, a Java runtime can be downloaded from ninite.com (for example Java AdoptOpenJDK).
 
-Step 1: **Download the Bitcoin Micro Collider executable JAR file [here](https://github.com/traxm/Bitcoin-Micro-Collider/releases)**.
+Step 1: **Download the Bitcoin Micro Collider executable JAR or EXE file [here](https://github.com/traxm/Bitcoin-Micro-Collider/releases)**.
 
 Step 2: **Create or download a list of bitcoin addresses to scan**.  The file needs to be in text format with each address on a separate line.  Example file pre-populated with addresses [here](https://github.com/traxm/Bitcoin-Micro-Collider/tree/master/example%20address%20lists).
 

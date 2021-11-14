@@ -3,25 +3,34 @@ import java.net.URISyntaxException;
 import java.util.Timer;
 import java.util.prefs.Preferences;
 
-import org.bitcoinj.core.Address;
 import org.bitcoinj.script.Script.ScriptType;
 
 public class BitcoinMicroCollider {
 
 	public static void main(String[] args) {
-		BitcoinMicroCollider thisCollider = new BitcoinMicroCollider();
-		thisCollider.startGui();
+		BitcoinMicroCollider thisCollider = new BitcoinMicroCollider();	
+
+		boolean isResetFilePath = false;
+		if (args != null && args.length > 0 && !args[0].isEmpty())
+			isResetFilePath = args[0].equals("resetFilePath") ? true : false;
+		
+		
+		charArray = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".toCharArray();
+
+		
+		thisCollider.startGui(isResetFilePath);
 	}
 
 	private Status colliderStatus = Status.MAIN_MENU;
 	private FileStatus fileStatus = FileStatus.FILE_NOT_LOADED;
 	private Boolean isInitialized = false;
-	private Address[][] p2pkh_address_array; // Array of address arrays
-	private int[][] indexArray; // Array of index values (to lookup address arrays based on prefix)
+	private AddressGroup[][][][] p2pkh_address_array; // Array of address arrays
 	private SearchThread[] threadArray;
 	private Timer guiTimer;
 	private String[] addressLabelArray = new String[10];
+	public static char[] charArray;
 
+	
 	private GuiUpdateTimer guiUpdateTimer;
 
 	private PrimaryWindow primaryWindow;
@@ -37,15 +46,11 @@ public class BitcoinMicroCollider {
 	public static String prefsFileString = "filePath";
 	public static String prefsThreadString = "threadCount";
 
-	public Address[][] getAddressArray() {
-
+	public AddressGroup[][][][] getAddressArray() {
 		return this.p2pkh_address_array;
-
 	}
 
-	public int[][] getIndexArray() {
-		return this.indexArray;
-	}
+
 
 	public Boolean isInitialized() {
 		return isInitialized;
@@ -95,7 +100,7 @@ public class BitcoinMicroCollider {
 		prefs.putInt(prefsThreadString, threadCount);
 	}
 
-	private void startGui() {
+	private void startGui(boolean resetFilePath) {
 		/*
 		 * Create a frame and populate with components
 		 */
@@ -109,7 +114,8 @@ public class BitcoinMicroCollider {
 		// Is the file available
 		if (LoadAddresses.isFileAvailable(prefs.get(prefsFileString, null))) {
 			// Load the existing file
-			primaryWindow.setAddressFile(new File(prefs.get(prefsFileString, null)));
+			if (!resetFilePath)
+				primaryWindow.setAddressFile(new File(prefs.get(prefsFileString, null)));
 
 			// Set the thread count
 			primaryWindow.setThreadCount(prefs.getInt(BitcoinMicroCollider.prefsThreadString, 4));
@@ -197,9 +203,8 @@ public class BitcoinMicroCollider {
 		primaryWindow.setThreadsActiveLabel(activeThreadCount);
 	}
 
-	public void setAddressArray(Address[][] thisAddressArray, int[][] thisIntArray) {
+	public void setAddressArray(AddressGroup[][][][] thisAddressArray) {
 		this.p2pkh_address_array = thisAddressArray;
-		this.indexArray = thisIntArray;
 	}
 	
 	public void setFileStatus(FileStatus thisStatus) {
@@ -209,7 +214,45 @@ public class BitcoinMicroCollider {
 	public FileStatus getFileStatus() { 
 		return this.fileStatus; 
 	}
+	
+	public int[] getLookupIndex(String thisString) {
+		return getLookupIndex(thisString.toCharArray());
+	}
+	
+	
+	public int[] getLookupIndex(char[] charLookupArray) {
+		// Returns an index to lookup the correct segmented address array
 
+		int firstVal = -1;
+		int secondVal = -1;
+		int thirdVal = -1;
+		int fourthVal = -1;
+
+
+		for (int i = 0; i < charArray.length; i++) {
+			if (charArray[i] == charLookupArray[1])
+				firstVal = i;
+			if (charArray[i] == charLookupArray[2])
+				secondVal = i;
+			if (charArray[i] == charLookupArray[3])
+				thirdVal = i;
+			if (charArray[i] == charLookupArray[4])
+				fourthVal = i;
+
+					
+			
+			if (firstVal > 0 
+					&& secondVal > 0 
+					&& thirdVal > 0
+					&& fourthVal > 0
+					) break;
+	}
+		
+		
+
+		return new int[] { firstVal, secondVal, thirdVal, fourthVal };
+
+	}
 }
 
 enum Status {

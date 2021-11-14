@@ -12,9 +12,7 @@ import org.bitcoinj.script.Script.ScriptType;
 public class SearchThread extends Thread {
 
 	private BitcoinMicroCollider bitcoinCollider;
-	private Address[][] addressArray;
-	private int[][] indexArray;
-	private char[] charArray;
+	private AddressGroup[][][][] addressArray;
 	private String[] labelArray; //For gui
 	private int thisThreadAddressCount = 0;
 	private int labelCounter = 0;
@@ -22,7 +20,9 @@ public class SearchThread extends Thread {
 	private Boolean isInterrupted = false;
 	private int startDelay = 0;
 	private Boolean isStringLabelProvider = false; //Does this thread populate the gui labels
-
+	private String thisString;
+	
+	
 	@Override
 	public void run() {
 		try {
@@ -36,8 +36,6 @@ public class SearchThread extends Thread {
 			// If the start delay is greater than zero assume this is the initial run (ie
 			// not a resumed event)
 			if (startDelay > 0 && !isInterrupted) {
-				// Create the character array to speed searches
-				this.charArray = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".toCharArray();
 				// Update the active thread count
 				bitcoinCollider.updateThreadCount();
 				// Start checking addresses
@@ -52,7 +50,6 @@ public class SearchThread extends Thread {
 	public SearchThread(BitcoinMicroCollider thisCollider, ScriptType thisType, int thisStartDelay, Boolean isGuiProvider) {
 		bitcoinCollider = thisCollider;
 		addressArray = thisCollider.getAddressArray();
-		this.indexArray = thisCollider.getIndexArray();
 		this.isStringLabelProvider = isGuiProvider;
 		startDelay = thisStartDelay;
 		
@@ -71,16 +68,15 @@ public class SearchThread extends Thread {
 			thisKey = new ECKey();
 			// Create an address object based on the address format
 			pubAddress = Address.fromKey(MainNetParams.get(), thisKey, ScriptType.P2PKH);
-
-			// Get the correct address array
-			Address[] thisAddressArray = this.getAddressArray(pubAddress);
-			if (evaluateAddress(pubAddress, thisAddressArray))
+			
+			// Get the correct address group
+			if (evaluateAddress(pubAddress, this.getAddressArray(pubAddress)))
 				// If an address miraculously matches something from the address list
 				handleMatch(thisKey);
 		}
 	}
 
-	private Boolean evaluateAddress(Address thisAddress, Address[] thisArray) {
+	private Boolean evaluateAddress(Address thisAddress, AddressGroup thisGroup) {
 
 		bitcoinCollider.logAddressCheck();
 		thisThreadAddressCount++;
@@ -88,49 +84,39 @@ public class SearchThread extends Thread {
 			this.updateGuiElements(thisAddress);
 		
 		
-		if (thisArray.length <= 0)
+		if (thisGroup.getAddressArray().length <= 0) {
+			//Debug
+			//System.out.println("skipping prefix value not indexed");
 			return false;
+		}
+			
 
-		//System.out.println(thisAddress + " - " + thisArray[0]);
-
-		for (int i = 0; i < thisArray.length; i++) {
-			if (thisAddress.equals(thisArray[i]))
+		//Debugging
+		//System.out.println("----- testing against addresses count of : " + thisGroup.getAddressArray().length);
+		
+		for (int i = 0; i < thisGroup.getAddressArray().length; i++) {
+			
+			//Debugging
+			//String string1 = thisAddress.toString();
+			//String string2 = thisGroup.getAddressArray()[i].toString();
+			//System.out.println("comparing " + string1 + " to " + string2);
+			
+			if (thisAddress.equals(thisGroup.getAddressArray()[i]))
 				return true;
 
 		}
 		return false;
 	}
 
-	private Address[] getAddressArray(Address thisAddress) {
+	private AddressGroup getAddressArray(Address thisAddress) {
 		// Retrieves the correct address based on leading prefix
-
-		String thisString = thisAddress.toString();
-		char firstChar = thisString.charAt(1);
-		char secondChar = thisString.charAt(2);
-
-		int indexVal = this.getLookupIndex(firstChar, secondChar);
-
-		return this.addressArray[indexVal];
+		
+		thisString = thisAddress.toString();
+		int[] indexVal = bitcoinCollider.getLookupIndex(thisString);
+		return this.addressArray[indexVal[0]][indexVal[1]][indexVal[2]][indexVal[3]];
 	}
 
-	private int getLookupIndex(char firstChar, char secondChar) {
-		// Returns an index to lookup the correct segmented address array
 
-		int firstVal = -1;
-		int secondVal = -1;
-
-		for (int i = 0; i < charArray.length; i++) {
-			if (charArray[i] == firstChar)
-				firstVal = i;
-			if (charArray[i] == secondChar)
-				secondVal = i;
-			
-			if (firstVal > 0 && secondVal > 0) break;
-		}
-
-		return this.indexArray[firstVal][secondVal];
-
-	}
 
 	private void handleMatch(ECKey thisKey) throws IOException {
 		/*
@@ -182,4 +168,7 @@ public class SearchThread extends Thread {
 		isInterrupted = true;
 	}
 
+	
+	
+	
 }

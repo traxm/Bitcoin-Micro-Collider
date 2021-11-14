@@ -1,31 +1,28 @@
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 import java.util.prefs.Preferences;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.params.MainNetParams;
 
 public class LoadAddresses extends Thread {
 
+	private int addressLimit = 10000000;
+	private int reportingIncrement = 50000;
+	
 	private BitcoinMicroCollider bitcoinCollider;
 	private PrimaryWindow primaryWindow;
 
 	private File tempFile;
-
+		
 	private ProcessStatus thisProcessStatus = ProcessStatus.NOT_INITIALIZED;
 	private Boolean isErrorShown = false;
-
-	long addressCount = 0;
-	char[] charArray;
-	int[][] addressIndex; // Index values for address prefixes
-	IndexHelper[] helperArray;
 
 	@Override
 	public void run() {
@@ -38,20 +35,7 @@ public class LoadAddresses extends Thread {
 		this.primaryWindow = thisWindow;
 		thisProcessStatus = ProcessStatus.INITIALIZED;
 
-		// Setup the character array
 
-		charArray = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".toCharArray();
-
-		// Populate the address index array
-		addressIndex = new int[charArray.length][charArray.length];
-		int counterValue = 0;
-		for (int i = 0; i < charArray.length; i++) {
-			for (int j = 0; j < charArray.length; j++) {
-				addressIndex[i][j] = counterValue;
-				counterValue++;
-				// System.out.println("set val " + i + " " + j + " to " + (counterValue-1));
-			}
-		}
 
 	}
 
@@ -68,22 +52,22 @@ public class LoadAddresses extends Thread {
 		String[] addressStringArray;
 		addressStringArray = readLines(this.tempFile);
 		
-		// Create index helper objects to speed process
-		helperArray = new IndexHelper[addressStringArray.length];
-		for (int i = 0; i < addressStringArray.length; i++) {
-			helperArray[i] = new IndexHelper(addressStringArray[i]);
-		}
 
 		// Get address arrays for the three address types
-		bitcoinCollider.setAddressArray(getAddressesFromArray(addressStringArray), this.addressIndex);
+		bitcoinCollider.setAddressArray(getAddressesFromArray(addressStringArray));
+		
+		//Clear the array
+		addressStringArray = null;
 
+		long addressCount = this.getTotalAddressCount();
+		
 		primaryWindow.setStatusTextPane("--------------------<br>");
 		primaryWindow.setStatusTextPane("<b>FINISHED LOADING " + String.format("%,d", addressCount) + " ADDRESSES</b>" + "<br>");
 	
 		bitcoinCollider.setFileStatus(FileStatus.FILE_LOADED);
 		
 		// Update the UI with the number of addresses loaded
-		primaryWindow.setTotalAddressLabel(this.getTotalAddressCount());
+		primaryWindow.setTotalAddressLabel(addressCount);
 
 		// Allow the user to start the collider
 		primaryWindow.setStartButtonEnabled(true);
@@ -97,7 +81,7 @@ public class LoadAddresses extends Thread {
 
 	}
 
-	private Address[][] getAddressesFromArray(String[] sourceAddresses) {
+	private AddressGroup[][][][] getAddressesFromArray(String[] sourceAddresses) {
 
 		Address thisAddress = null;
 		ArrayList<Address> addressList = null;
@@ -105,11 +89,11 @@ public class LoadAddresses extends Thread {
 		addressList = new ArrayList<Address>();
 
 		for (int i = 0; i < sourceAddresses.length; i++) {
-
+			
 			// Skip broken addresses
 			if (sourceAddresses[i].length() > 35 || sourceAddresses[i].isEmpty())
 				continue;
-
+			
 			// Only pull addresses of the specified type (we ignore bech32 since it
 			// represents a small portion of addresses)
 
@@ -128,85 +112,131 @@ public class LoadAddresses extends Thread {
 				continue;
 			}
 			addressList.add(thisAddress);
+			
+			//Update the UI
+			if (i % reportingIncrement == 0)
+				primaryWindow.setStatusTextPane("Sorting addresses : " + String.format("%,d", i) + "<br>");
+			
 		}
 
 		Address[] tempAddressArray = new Address[addressList.size()];
-		tempAddressArray = addressList.toArray(tempAddressArray);
-		return this.setSegmentedArray_2d(tempAddressArray);
+		
+		for (int i=0; i < addressList.size(); i++ ) {
+			tempAddressArray[i] = addressList.get(i);
+			
+			//Update the UI
+			if (i % reportingIncrement == 0)
+				primaryWindow.setStatusTextPane("Populating addresses : " + String.format("%,d", i) + "<br>");
+		}
+		
+		
+		return this.createSegmentedArray(tempAddressArray);
 	}
 
-	private Address[][] setSegmentedArray_2d(Address[] thisAddressArray) {
-		// Returns a 2D array divided by addresses starting letter
+	private AddressGroup[][][][] createSegmentedArray(Address[] thisAddressArray) {
+		// Returns a 3D array divided by addresses starting letter
+		
 
-		// Create an arraylist to house the Address arrays
-		ArrayList<Address[]> thisList = new ArrayList<Address[]>();
+		int arrayLength = BitcoinMicroCollider.charArray.length;
+		
+		AddressGroup[][][][] tempArray = new AddressGroup[arrayLength][arrayLength][arrayLength][arrayLength];
+				
+		
+		//Create the address groups
+		for (int a = 0; a < arrayLength; a++) {
+			for (int b = 0; b < arrayLength; b++) {
+				for (int c = 0; c < arrayLength; c++) {
+					for (int d = 0; d < arrayLength; d++) {
+									tempArray[a][b][c][d] = new AddressGroup();
 
-		// Add an array based on each char to the list
-		for (int i = 0; i < charArray.length; i++) {
-			for (int j = 0; j < charArray.length; j++) {
-				Address[] thisArray = getSegmentedArray(thisAddressArray, charArray[i], charArray[j]);
-				thisList.add(thisArray);
+					
+					}		
+				}
 			}
 		}
 
-		// Create the final 3D array
-		Address[][] tempArray = new Address[thisList.size()][];
-		for (int i = 0; i < thisList.size(); i++)
-			tempArray[i] = thisList.get(i);
+		
+		//Populate the array with sorted addresses
+		for (int i = 0; i < thisAddressArray.length; i++) {
+			IndexHelper thisHelper = new IndexHelper(thisAddressArray[i].toString());
+			int[] lookupIndex = thisHelper.getLookupIndex();
+			tempArray[lookupIndex[0]] [lookupIndex[1]] [lookupIndex[2]] [lookupIndex[3]].addAddress(thisAddressArray[i]);
+			
+		}
+
+		
+		for (int a = 0; a < arrayLength; a++) {
+			for (int b = 0; b < arrayLength; b++) {
+				for (int c = 0; c < arrayLength; c++) {
+					for (int d = 0; d < arrayLength; d++) {
+								tempArray[a][b][c][d].finalizeGroup();
+												
+						}
+					}
+				}
+			}
+				
 		
 		return tempArray;
 	}
 
-	private Address[] getSegmentedArray(Address[] thisArray, char firstPrefix, char secondPrefix) {
-		// Returns an array of addresses with a specific leading char
-		ArrayList<Address> thisList = new ArrayList<Address>();
-
-		for (int i = 0; i < helperArray.length; i++) {
-			if (helperArray[i].isMatch(firstPrefix, secondPrefix)) {
-				thisList.add(thisArray[i]);
-				addressCount++;
-				if (addressCount % 1000 == 0)
-					primaryWindow.setStatusTextPane("Loading addresses : " + String.format("%,d", addressCount) + "<br>");
-				continue;
-			}
-		}
-
-		Address[] tempArray = new Address[thisList.size()];
-		return thisList.toArray(tempArray);
-	}
 
 	private String[] readLines(File thisFile) {
 		/*
 		 * Read lines from a file
 		 */
 
+		int lineCounter = 0;
+		
 		long startTime = System.nanoTime();
 
-		BufferedReader bufferedReader;
-
-		FileInputStream thisStream;
-		List<String> lines = null;
+		Scanner thisScanner = null;
+		
+		
+		FileInputStream thisStream = null;
+		List<String> linesList = null;
 		try {
-			thisStream = new FileInputStream(thisFile);
-			bufferedReader = new BufferedReader(new InputStreamReader(thisStream));
-
-			lines = new ArrayList<String>();
+			
+			linesList = new ArrayList<String>();
 			String line = null;
+			
+			thisStream = new FileInputStream(thisFile);
+			thisScanner = new Scanner(thisStream, "UTF-8");
+			
+			while (thisScanner.hasNextLine() && lineCounter < addressLimit) {
 
-			while ((line = bufferedReader.readLine()) != null) {
+				line = thisScanner.nextLine();
+							
 				// only add addresses starting with 1
-				if (line.charAt(0) == '1')
-					lines.add(line);
+				if (line.charAt(0) == '1') {
+					linesList.add(line);
+					lineCounter++;
+					//System.out.println("Read: " + line);
+					//System.out.println("Added a Line " + linesList.size());
+					if (lineCounter % reportingIncrement == 0)
+						primaryWindow.setStatusTextPane("Reading addresses : " + String.format("%,d", lineCounter) + "<br>");
+					
+				}
 			}
-
-			bufferedReader.close();
+			
 		} catch (FileNotFoundException e) {
 			primaryWindow.showFileErrorMessage();
 			e.printStackTrace();
 
-		} catch (IOException e) {
-			primaryWindow.showFileErrorMessage();
-			e.printStackTrace();
+		} finally {
+			if (thisStream != null)
+				try {
+					thisStream.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			
+			if (thisStream != null)
+				try {
+					thisStream.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 		}
 
 		long endTime = System.nanoTime();
@@ -214,18 +244,39 @@ public class LoadAddresses extends Thread {
 		primaryWindow.setStatusTextPane("File text read time " + ((endTime - startTime)/10000000) + "ms");
 		primaryWindow.setStatusTextPane("Loading addresses into memory... <br>");
 
-		return lines.toArray(new String[lines.size()]);
+		
+		String[] returnArray = new String[linesList.size()];
+		
+		for (int i=0; i < linesList.size(); i++) {
+			returnArray[i] =linesList.get(i);
+			
+			if (i % reportingIncrement == 0)
+				primaryWindow.setStatusTextPane("Converting addresses : " + String.format("%,d", i) + "<br>");
+			
+		}
+		
+		return returnArray;
+		
+		
+		
+		//return linesList.toArray(new String[linesList.size()]);
 	}
 
 	private long getTotalAddressCount() {
 		// Counts the number of addresses across all arrays
 
-		Address[][] thisArray = this.bitcoinCollider.getAddressArray();
+		AddressGroup[][][][] thisArray = this.bitcoinCollider.getAddressArray();
 
 		long totalCount = 0;
 
-		for (int i = 0; i < thisArray.length; i++)
-			totalCount += thisArray[i].length;
+		for (int a = 0; a < thisArray.length; a++)
+			for (int b = 0; b < thisArray[a].length; b++) {
+				for (int c = 0; c < thisArray[a][b].length; c++)
+					for (int d = 0; d < thisArray[a][b][c].length; d++) {
+					totalCount += thisArray[a][b][c][d].getAddressArray().length;
+				}
+			}
+			
 
 		return totalCount;
 	}
@@ -269,21 +320,18 @@ public class LoadAddresses extends Thread {
 
 	class IndexHelper {
 
-		public IndexHelper(String thisString) {
-			char1 = thisString.charAt(1);
-			char2 = thisString.charAt(2);
-		}
-
-		public Boolean isMatch(char c1, char c2) {
-			if (c1 != char1) return false;
-			if (c2 != char2) return false;
+		char[] charArray;
+		
+		public IndexHelper(String thisString) {		
+			charArray = thisString.toCharArray();
 			
-			return true;			
 		}
 
-		// Use custom class to only perform string operations once
-		char char1;
-		char char2;
-	}
+		public int[] getLookupIndex() {
+			return bitcoinCollider.getLookupIndex(charArray);
+		}
 
+	}
+	
+	
 }
